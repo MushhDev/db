@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureVault - Base de Datos Segura</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .btn {
+            padding: 12px 24px;
+            margin: 5px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s;
+        }
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        .close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #aaa;
+        }
+        .close:hover {
+            color: #000;
+        }
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+        .item-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        .item-card.encrypted {
+            border-color: #ffc107;
+            background: #fffbf0;
+        }
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .item-name {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+        }
+        .item-type {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+        }
+        .item-content {
+            color: #666;
+            margin-bottom: 15px;
+            word-break: break-word;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .item-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .item-actions .btn {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        .encryption-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ffc107;
+            color: #212529;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        .level-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-left: 5px;
+            background: #28a745;
+        }
+        .level-1 { background: #ffc107; }
+        .level-2 { background: #ff9800; }
+        .level-3 { background: #ff5722; }
+        .level-4 { background: #e91e63; }
+        .level-5 { background: #9c27b0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>🔐 SecureVault</h1>
+                    <p>Gestión segura de archivos y datos con encriptación avanzada</p>
+                    <div id="versionInfo" style="margin-top: 15px; font-size: 0.9em; opacity: 0.9;"></div>
+                </div>
+                <div style="text-align: right;">
+                    <div id="userInfo" style="margin-bottom: 10px;"></div>
+                    <button class="btn btn-danger" onclick="logout()" style="padding: 8px 16px; font-size: 14px;">🚪 Salir</button>
+                    <button class="btn btn-primary" onclick="toggleDarkMode()" style="padding: 8px 16px; font-size: 14px; margin-left: 5px;">🌙 Modo Oscuro</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                <input type="text" id="searchInput" placeholder="🔍 Buscar..." style="flex: 1; min-width: 200px; padding: 12px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 16px;">
+                <select id="categoryFilter" style="padding: 12px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 16px;">
+                    <option value="">Todas las categorías</option>
+                </select>
+                <select id="typeFilter" style="padding: 12px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 16px;">
+                    <option value="">Todos los tipos</option>
+                    <option value="text">Texto</option>
+                    <option value="password">Contraseña</option>
+                    <option value="note">Nota</option>
+                    <option value="file">Archivo</option>
+                </select>
+                <label style="display: flex; align-items: center; gap: 5px; padding: 12px;">
+                    <input type="checkbox" id="encryptedOnly"> Solo encriptados
+                </label>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="openAddModal()">➕ Agregar Item</button>
+                <button class="btn btn-success" onclick="openUploadModal()">📁 Subir Archivo</button>
+                <button class="btn btn-warning" onclick="openPasswordGenerator()">🔑 Generar Contraseña</button>
+                <button class="btn btn-primary" onclick="openStatsModal()">📊 Estadísticas</button>
+                <button class="btn btn-warning" onclick="openExportModal()">💾 Exportar</button>
+                <button class="btn btn-primary" onclick="openImportModal()">📥 Importar</button>
+            </div>
+        </div>
+        
+        <div class="items-grid" id="itemsGrid"></div>
+    </div>
+
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addModal')">&times;</span>
+            <h2>Agregar Nuevo Item</h2>
+            <form onsubmit="addItem(event)">
+                <div class="form-group">
+                    <label>Nombre:</label>
+                    <input type="text" id="itemName" required>
+                </div>
+                <div class="form-group">
+                    <label>Tipo:</label>
+                    <select id="itemType" required>
+                        <option value="text">Texto</option>
+                        <option value="password">Contraseña</option>
+                        <option value="note">Nota</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Categoría:</label>
+                    <input type="text" id="itemCategory" placeholder="Opcional">
+                </div>
+                <div class="form-group">
+                    <label>Contenido:</label>
+                    <textarea id="itemContent" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Agregar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="encryptModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('encryptModal')">&times;</span>
+            <h2>Encriptar Item</h2>
+            <form onsubmit="encryptItem(event)">
+                <input type="hidden" id="encryptItemId">
+                <div class="form-group">
+                    <label>Contraseña:</label>
+                    <input type="password" id="encryptPassword" required>
+                </div>
+                <div class="form-group">
+                    <label>Nivel de Encriptación:</label>
+                    <select id="encryptLevel" required>
+                        <option value="1">Nivel 1 - Base64</option>
+                        <option value="2">Nivel 2 - AES-128</option>
+                        <option value="3">Nivel 3 - AES-256</option>
+                        <option value="4">Nivel 4 - AES-256 + PBKDF2</option>
+                        <option value="5">Nivel 5 - AES-256 + PBKDF2 + HMAC</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-warning">Encriptar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="decryptModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('decryptModal')">&times;</span>
+            <h2>Desencriptar Item</h2>
+            <form onsubmit="decryptItem(event)">
+                <input type="hidden" id="decryptItemId">
+                <div class="form-group">
+                    <label>Contraseña:</label>
+                    <input type="password" id="decryptPassword" required>
+                </div>
+                <button type="submit" class="btn btn-success">Desencriptar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('exportModal')">&times;</span>
+            <h2>Exportar Base de Datos</h2>
+            <form onsubmit="exportData(event)">
+                <div class="form-group">
+                    <label>Contraseña:</label>
+                    <input type="password" id="exportPassword" required>
+                </div>
+                <div class="form-group">
+                    <label>Formato:</label>
+                    <select id="exportFormat" required>
+                        <option value="encript">.encript (Encriptado)</option>
+                        <option value="json">.json (JSON)</option>
+                        <option value="csv">.csv (CSV)</option>
+                        <option value="txt">.txt (Texto)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="exportPasswordGroup">
+                    <label>Contraseña:</label>
+                    <input type="password" id="exportPassword" required>
+                </div>
+                <div class="form-group" id="exportLevelGroup">
+                    <label>Nivel de Encriptación:</label>
+                    <select id="exportLevel" required>
+                        <option value="5">Nivel 5 - Máxima Seguridad</option>
+                        <option value="4">Nivel 4</option>
+                        <option value="3">Nivel 3</option>
+                        <option value="2">Nivel 2</option>
+                        <option value="1">Nivel 1</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-success">Exportar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('importModal')">&times;</span>
+            <h2>Importar Base de Datos</h2>
+            <form onsubmit="importData(event)">
+                <div class="form-group">
+                    <label>Archivo .encript:</label>
+                    <input type="file" id="importFile" accept=".encript" required>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña:</label>
+                    <input type="password" id="importPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Importar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('uploadModal')">&times;</span>
+            <h2>Subir Archivo</h2>
+            <form onsubmit="uploadFile(event)">
+                <div class="form-group">
+                    <label>Seleccionar Archivo:</label>
+                    <input type="file" id="uploadFileInput" required>
+                </div>
+                <div class="form-group">
+                    <label>Categoría:</label>
+                    <input type="text" id="uploadCategory" placeholder="Opcional">
+                </div>
+                <button type="submit" class="btn btn-primary">Subir</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="passwordGeneratorModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('passwordGeneratorModal')">&times;</span>
+            <h2>🔑 Generador de Contraseñas</h2>
+            <form onsubmit="generatePassword(event)">
+                <div class="form-group">
+                    <label>Longitud:</label>
+                    <input type="number" id="pwdLength" value="16" min="8" max="64" required>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="pwdUppercase" checked> Mayúsculas
+                    </label>
+                    <label>
+                        <input type="checkbox" id="pwdLowercase" checked> Minúsculas
+                    </label>
+                    <label>
+                        <input type="checkbox" id="pwdNumbers" checked> Números
+                    </label>
+                    <label>
+                        <input type="checkbox" id="pwdSpecial" checked> Caracteres especiales
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary">Generar</button>
+                <div id="generatedPassword" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; display: none;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="pwdResult" readonly style="flex: 1; padding: 10px; border: 2px solid #e9ecef; border-radius: 8px; font-family: monospace;">
+                        <button type="button" class="btn btn-success" onclick="copyPassword()">📋 Copiar</button>
+                    </div>
+                    <div id="pwdStrengthInfo" style="margin-top: 10px;"></div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="statsModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="close" onclick="closeModal('statsModal')">&times;</span>
+            <h2>📊 Estadísticas del Vault</h2>
+            <div id="statsContent" style="padding: 20px 0;">
+                <div class="spinner" style="text-align: center; padding: 40px;">Cargando...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('editModal')">&times;</span>
+            <h2>Editar Item</h2>
+            <form onsubmit="updateItem(event)">
+                <input type="hidden" id="editItemId">
+                <div class="form-group">
+                    <label>Nombre:</label>
+                    <input type="text" id="editItemName" required>
+                </div>
+                <div class="form-group">
+                    <label>Tipo:</label>
+                    <select id="editItemType" required>
+                        <option value="text">Texto</option>
+                        <option value="password">Contraseña</option>
+                        <option value="note">Nota</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Categoría:</label>
+                    <input type="text" id="editItemCategory">
+                </div>
+                <div class="form-group">
+                    <label>Contenido:</label>
+                    <textarea id="editItemContent" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="viewModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close" onclick="closeModal('viewModal')">&times;</span>
+            <h2 id="viewItemName"></h2>
+            <div id="viewItemContent" style="padding: 20px 0;"></div>
+        </div>
+    </div>
+
+    <script>
+        let items = [];
+
+        async function loadItems() {
+            try {
+                const response = await fetch('/api/items');
+                items = await response.json();
+                renderItems();
+            } catch (error) {
+                console.error('Error loading items:', error);
+            }
+        }
+
+        function renderItems() {
+            const grid = document.getElementById('itemsGrid');
+            grid.innerHTML = '';
+            
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `item-card ${item.encrypted ? 'encrypted' : ''}`;
+                
+                let contentPreview = item.content;
+                if (item.type === 'file') {
+                    contentPreview = `[Archivo: ${item.name}]`;
+                } else if (item.encrypted) {
+                    contentPreview = '[ENCRIPTADO] ' + contentPreview.substring(0, 50) + '...';
+                } else {
+                    contentPreview = contentPreview.substring(0, 100) + (contentPreview.length > 100 ? '...' : '');
+                }
+                
+                card.innerHTML = `
+                    ${item.encrypted ? `<span class="encryption-badge">🔒 Nivel ${item.level} <span class="level-indicator level-${item.level}"></span></span>` : ''}
+                    <div class="item-header">
+                        <div class="item-name">${item.name}</div>
+                        <span class="item-type">${item.type}</span>
+                    </div>
+                    <div class="item-content">${contentPreview}</div>
+                    <div class="item-actions">
+                        ${item.encrypted 
+                            ? `<button class="btn btn-success" onclick="openDecryptModal('${item.id}')">🔓 Desencriptar</button>`
+                            : `<button class="btn btn-warning" onclick="openEncryptModal('${item.id}')">🔒 Encriptar</button>`
+                        }
+                        ${item.type === 'file' 
+                            ? `<button class="btn btn-primary" onclick="downloadFile('${item.id}')">⬇️ Descargar</button>`
+                            : ''
+                        }
+                        <button class="btn btn-primary" onclick="viewItem('${item.id}')">👁️ Ver</button>
+                        <button class="btn btn-success" onclick="editItem('${item.id}')">✏️ Editar</button>
+                        <button class="btn btn-danger" onclick="deleteItem('${item.id}')">🗑️ Eliminar</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function openAddModal() {
+            document.getElementById('addModal').style.display = 'block';
+        }
+
+        function openUploadModal() {
+            document.getElementById('uploadModal').style.display = 'block';
+        }
+
+        function openEncryptModal(itemId) {
+            document.getElementById('encryptItemId').value = itemId;
+            document.getElementById('encryptModal').style.display = 'block';
+        }
+
+        function openDecryptModal(itemId) {
+            document.getElementById('decryptItemId').value = itemId;
+            document.getElementById('decryptModal').style.display = 'block';
+        }
+
+        function openExportModal() {
+            document.getElementById('exportModal').style.display = 'block';
+        }
+
+        function openImportModal() {
+            document.getElementById('importModal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/auth/status');
+                const data = await response.json();
+                if (!data.logged_in) {
+                    window.location.href = '/login';
+                    return false;
+                }
+                document.getElementById('userInfo').textContent = `Usuario: ${data.username}`;
+                return true;
+            } catch (error) {
+                window.location.href = '/login';
+                return false;
+            }
+        }
+
+        async function loadItems() {
+            if (!await checkAuth()) return;
+            
+            try {
+                const search = document.getElementById('searchInput').value;
+                const category = document.getElementById('categoryFilter').value;
+                const type = document.getElementById('typeFilter').value;
+                const encryptedOnly = document.getElementById('encryptedOnly').checked;
+                
+                let url = '/api/items?';
+                if (search) url += `search=${encodeURIComponent(search)}&`;
+                if (category) url += `category=${encodeURIComponent(category)}&`;
+                if (type) url += `type=${encodeURIComponent(type)}&`;
+                if (encryptedOnly) url += `encrypted_only=true&`;
+                
+                const response = await fetch(url);
+                items = await response.json();
+                renderItems();
+                loadCategories();
+            } catch (error) {
+                console.error('Error loading items:', error);
+            }
+        }
+
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                const categories = await response.json();
+                const select = document.getElementById('categoryFilter');
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">Todas las categorías</option>';
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    select.appendChild(option);
+                });
+                select.value = currentValue;
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        async function addItem(event) {
+            event.preventDefault();
+            const name = document.getElementById('itemName').value;
+            const type = document.getElementById('itemType').value;
+            const content = document.getElementById('itemContent').value;
+            const category = document.getElementById('itemCategory').value;
+
+            try {
+                const response = await fetch('/api/items', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name, type, content, category})
+                });
+                
+                if (response.ok) {
+                    closeModal('addModal');
+                    document.getElementById('itemName').value = '';
+                    document.getElementById('itemContent').value = '';
+                    document.getElementById('itemCategory').value = '';
+                    loadItems();
+                }
+            } catch (error) {
+                alert('Error al agregar item: ' + error);
+            }
+        }
+
+        async function uploadFile(event) {
+            event.preventDefault();
+            const fileInput = document.getElementById('uploadFileInput');
+            const file = fileInput.files[0];
+            const category = document.getElementById('uploadCategory').value;
+
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            if (category) formData.append('category', category);
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    closeModal('uploadModal');
+                    fileInput.value = '';
+                    document.getElementById('uploadCategory').value = '';
+                    loadItems();
+                }
+            } catch (error) {
+                alert('Error al subir archivo: ' + error);
+            }
+        }
+
+        async function encryptItem(event) {
+            event.preventDefault();
+            const itemId = document.getElementById('encryptItemId').value;
+            const password = document.getElementById('encryptPassword').value;
+            const level = document.getElementById('encryptLevel').value;
+
+            try {
+                const response = await fetch('/api/encrypt', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({item_id: itemId, password, level})
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    closeModal('encryptModal');
+                    document.getElementById('encryptPassword').value = '';
+                    loadItems();
+                    alert('Item encriptado correctamente');
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error al encriptar: ' + error);
+            }
+        }
+
+        async function decryptItem(event) {
+            event.preventDefault();
+            const itemId = document.getElementById('decryptItemId').value;
+            const password = document.getElementById('decryptPassword').value;
+
+            try {
+                const response = await fetch('/api/decrypt', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({item_id: itemId, password})
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    closeModal('decryptModal');
+                    document.getElementById('decryptPassword').value = '';
+                    loadItems();
+                    alert('Item desencriptado correctamente');
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error al desencriptar: ' + error);
+            }
+        }
+
+        async function deleteItem(itemId) {
+            if (!confirm('¿Estás seguro de eliminar este item?')) return;
+
+            try {
+                const response = await fetch(`/api/items/${itemId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadItems();
+                }
+            } catch (error) {
+                alert('Error al eliminar: ' + error);
+            }
+        }
+
+        async function downloadFile(itemId) {
+            try {
+                const response = await fetch(`/api/download/${itemId}`);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = items.find(i => i.id === itemId)?.name || 'file';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }
+            } catch (error) {
+                alert('Error al descargar: ' + error);
+            }
+        }
+
+        document.getElementById('exportFormat').addEventListener('change', function() {
+            const format = this.value;
+            const passwordGroup = document.getElementById('exportPasswordGroup');
+            const levelGroup = document.getElementById('exportLevelGroup');
+            if (format === 'encript') {
+                passwordGroup.style.display = 'block';
+                levelGroup.style.display = 'block';
+                document.getElementById('exportPassword').required = true;
+            } else {
+                passwordGroup.style.display = 'none';
+                levelGroup.style.display = 'none';
+                document.getElementById('exportPassword').required = false;
+            }
+        });
+
+        async function exportData(event) {
+            event.preventDefault();
+            const format = document.getElementById('exportFormat').value;
+            const password = document.getElementById('exportPassword').value;
+            const level = document.getElementById('exportLevel').value;
+
+            try {
+                const response = await fetch('/api/export', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({password, level, format})
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const ext = format === 'encript' ? 'encript' : format;
+                    a.download = `database.${ext}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    closeModal('exportModal');
+                    document.getElementById('exportPassword').value = '';
+                    alert('Base de datos exportada correctamente');
+                }
+            } catch (error) {
+                alert('Error al exportar: ' + error);
+            }
+        }
+
+        async function openPasswordGenerator() {
+            document.getElementById('passwordGeneratorModal').style.display = 'block';
+        }
+
+        async function generatePassword(event) {
+            event.preventDefault();
+            const length = parseInt(document.getElementById('pwdLength').value);
+            const includeUppercase = document.getElementById('pwdUppercase').checked;
+            const includeLowercase = document.getElementById('pwdLowercase').checked;
+            const includeNumbers = document.getElementById('pwdNumbers').checked;
+            const includeSpecial = document.getElementById('pwdSpecial').checked;
+
+            try {
+                const response = await fetch('/api/password/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        length,
+                        include_uppercase: includeUppercase,
+                        include_lowercase: includeLowercase,
+                        include_numbers: includeNumbers,
+                        include_special: includeSpecial
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('pwdResult').value = result.password;
+                    document.getElementById('generatedPassword').style.display = 'block';
+                    
+                    const strength = result.strength;
+                    const strengthEl = document.getElementById('pwdStrengthInfo');
+                    strengthEl.innerHTML = `
+                        <div style="margin-top: 10px;">
+                            <strong>Fuerza: ${strength.strength}</strong>
+                            <div style="height: 8px; background: #e9ecef; border-radius: 10px; margin-top: 5px; overflow: hidden;">
+                                <div style="height: 100%; width: ${strength.percentage}%; background: ${strength.score >= 5 ? '#28a745' : strength.score >= 3 ? '#ffc107' : '#dc3545'}; border-radius: 10px;"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                alert('Error al generar contraseña: ' + error);
+            }
+        }
+
+        function copyPassword() {
+            const pwdInput = document.getElementById('pwdResult');
+            pwdInput.select();
+            document.execCommand('copy');
+            alert('Contraseña copiada al portapapeles');
+        }
+
+        async function openStatsModal() {
+            document.getElementById('statsModal').style.display = 'block';
+            const statsContent = document.getElementById('statsContent');
+            statsContent.innerHTML = '<div class="spinner" style="text-align: center; padding: 40px;">Cargando...</div>';
+
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                
+                statsContent.innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                        <div style="padding: 20px; background: #f8f9fa; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 2em; font-weight: bold; color: #667eea;">${stats.total_items}</div>
+                            <div style="color: #666;">Total de Items</div>
+                        </div>
+                        <div style="padding: 20px; background: #f8f9fa; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 2em; font-weight: bold; color: #ffc107;">${stats.encrypted_items}</div>
+                            <div style="color: #666;">Encriptados</div>
+                        </div>
+                        <div style="padding: 20px; background: #f8f9fa; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 2em; font-weight: bold; color: #28a745;">${stats.password_items}</div>
+                            <div style="color: #666;">Contraseñas</div>
+                        </div>
+                        <div style="padding: 20px; background: #f8f9fa; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 2em; font-weight: bold; color: #dc3545;">${stats.file_items}</div>
+                            <div style="color: #666;">Archivos</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 30px;">
+                        <h3>Por Nivel de Encriptación:</h3>
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 10px;">
+                            ${[1,2,3,4,5].map(level => `
+                                <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 1.5em; font-weight: bold;">${stats.by_level[level] || 0}</div>
+                                    <div style="color: #666; font-size: 0.9em;">Nivel ${level}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ${Object.keys(stats.categories).length > 0 ? `
+                        <div style="margin-top: 30px;">
+                            <h3>Categorías:</h3>
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+                                ${Object.entries(stats.categories).map(([cat, count]) => `
+                                    <div style="padding: 10px 15px; background: #667eea; color: white; border-radius: 20px;">
+                                        ${cat}: ${count}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+            } catch (error) {
+                statsContent.innerHTML = '<div style="color: #dc3545;">Error al cargar estadísticas</div>';
+            }
+        }
+
+        async function viewItem(itemId) {
+            try {
+                const response = await fetch(`/api/items/${itemId}`);
+                const item = await response.json();
+                
+                document.getElementById('viewItemName').textContent = item.name;
+                const content = document.getElementById('viewItemContent');
+                content.innerHTML = `
+                    <div style="margin-bottom: 15px;">
+                        <strong>Tipo:</strong> ${item.type} | 
+                        <strong>Categoría:</strong> ${item.category || 'N/A'} |
+                        <strong>Encriptado:</strong> ${item.encrypted ? 'Sí (Nivel ' + item.level + ')' : 'No'}
+                    </div>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; white-space: pre-wrap; word-break: break-word;">
+                        ${item.encrypted ? '[CONTENIDO ENCRIPTADO]' : item.content}
+                    </div>
+                    <div style="margin-top: 15px; color: #666; font-size: 0.9em;">
+                        Creado: ${new Date(item.created).toLocaleString()} | 
+                        Modificado: ${new Date(item.modified || item.created).toLocaleString()}
+                    </div>
+                `;
+                document.getElementById('viewModal').style.display = 'block';
+            } catch (error) {
+                alert('Error al cargar item: ' + error);
+            }
+        }
+
+        async function editItem(itemId) {
+            try {
+                const response = await fetch(`/api/items/${itemId}`);
+                const item = await response.json();
+                
+                if (item.encrypted) {
+                    alert('No se puede editar un item encriptado. Desencripta primero.');
+                    return;
+                }
+                
+                document.getElementById('editItemId').value = item.id;
+                document.getElementById('editItemName').value = item.name;
+                document.getElementById('editItemType').value = item.type;
+                document.getElementById('editItemCategory').value = item.category || '';
+                document.getElementById('editItemContent').value = item.content;
+                document.getElementById('editModal').style.display = 'block';
+            } catch (error) {
+                alert('Error al cargar item: ' + error);
+            }
+        }
+
+        async function updateItem(event) {
+            event.preventDefault();
+            const itemId = document.getElementById('editItemId').value;
+            const name = document.getElementById('editItemName').value;
+            const type = document.getElementById('editItemType').value;
+            const category = document.getElementById('editItemCategory').value;
+            const content = document.getElementById('editItemContent').value;
+
+            try {
+                const response = await fetch(`/api/items/${itemId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name, type, category, content})
+                });
+                
+                if (response.ok) {
+                    closeModal('editModal');
+                    loadItems();
+                    alert('Item actualizado correctamente');
+                }
+            } catch (error) {
+                alert('Error al actualizar item: ' + error);
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', {method: 'POST'});
+                window.location.href = '/login';
+            } catch (error) {
+                window.location.href = '/login';
+            }
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+        }
+
+        document.getElementById('searchInput').addEventListener('input', loadItems);
+        document.getElementById('categoryFilter').addEventListener('change', loadItems);
+        document.getElementById('typeFilter').addEventListener('change', loadItems);
+        document.getElementById('encryptedOnly').addEventListener('change', loadItems);
+
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+
+        async function importData(event) {
+            event.preventDefault();
+            const fileInput = document.getElementById('importFile');
+            const password = document.getElementById('importPassword').value;
+            const file = fileInput.files[0];
+
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('password', password);
+
+            try {
+                const response = await fetch('/api/import', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    closeModal('importModal');
+                    fileInput.value = '';
+                    document.getElementById('importPassword').value = '';
+                    loadItems();
+                    alert(`Base de datos importada correctamente. ${result.count} items cargados.`);
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error al importar: ' + error);
+            }
+        }
+
+        async function loadVersionInfo() {
+            try {
+                const response = await fetch('/api/version');
+                const info = await response.json();
+                const versionEl = document.getElementById('versionInfo');
+                let html = `Versión: v${info.current}`;
+                if (info.update_available) {
+                    html += ` <span style="background: #ffc107; color: #212529; padding: 3px 10px; border-radius: 15px; margin-left: 10px; font-weight: 600;">⚠ Actualización disponible: v${info.latest}</span>`;
+                }
+                versionEl.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading version:', error);
+            }
+        }
+
+        window.onload = async function() {
+            if (await checkAuth()) {
+                loadItems();
+                loadVersionInfo();
+            }
+        };
+    </script>
+    <style>
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        body.dark-mode .container {
+            background: #2d2d44;
+            color: #e0e0e0;
+        }
+        body.dark-mode .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        body.dark-mode .controls {
+            background: #252538;
+            border-color: #3d3d5c;
+        }
+        body.dark-mode .item-card {
+            background: #2d2d44;
+            border-color: #3d3d5c;
+            color: #e0e0e0;
+        }
+        body.dark-mode .item-card:hover {
+            border-color: #667eea;
+        }
+        body.dark-mode .modal-content {
+            background: #2d2d44;
+            color: #e0e0e0;
+        }
+        body.dark-mode input,
+        body.dark-mode textarea,
+        body.dark-mode select {
+            background: #1a1a2e;
+            border-color: #3d3d5c;
+            color: #e0e0e0;
+        }
+        body.dark-mode .form-group label {
+            color: #e0e0e0;
+        }
+    </style>
+</body>
+</html>
+

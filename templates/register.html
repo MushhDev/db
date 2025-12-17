@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - SecureVault</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .register-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 450px;
+            width: 100%;
+            padding: 40px;
+            animation: slideUp 0.5s;
+        }
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .password-strength {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            display: none;
+        }
+        .strength-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        .strength-fill {
+            height: 100%;
+            transition: width 0.3s, background-color 0.3s;
+            border-radius: 10px;
+        }
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="logo">
+            <h1>🔐 SecureVault</h1>
+            <p>Crear Cuenta</p>
+        </div>
+        <div id="statusMessage" class="status"></div>
+        <form onsubmit="register(event)">
+            <div class="form-group">
+                <label>Usuario:</label>
+                <input type="text" id="username" required autofocus>
+            </div>
+            <div class="form-group">
+                <label>Contraseña:</label>
+                <input type="password" id="password" required oninput="checkPasswordStrength()">
+                <div id="passwordStrength" class="password-strength">
+                    <div style="font-size: 0.9em; margin-bottom: 5px;">
+                        <strong id="strengthText">Fuerza:</strong>
+                    </div>
+                    <div class="strength-bar">
+                        <div id="strengthBar" class="strength-fill" style="width: 0%;"></div>
+                    </div>
+                    <div id="strengthFeedback" style="font-size: 0.85em; color: #666; margin-top: 5px;"></div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Registrarse</button>
+        </form>
+        <div class="login-link">
+            ¿Ya tienes cuenta? <a href="/login">Inicia sesión aquí</a>
+        </div>
+    </div>
+    <script>
+        async function checkPasswordStrength() {
+            const password = document.getElementById('password').value;
+            if (!password) {
+                document.getElementById('passwordStrength').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('passwordStrength').style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/password/check', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({password})
+                });
+                
+                const result = await response.json();
+                const strength = result.strength;
+                
+                document.getElementById('strengthText').textContent = `Fuerza: ${strength.strength}`;
+                document.getElementById('strengthBar').style.width = strength.percentage + '%';
+                
+                let color = '#dc3545';
+                if (strength.score >= 5) color = '#28a745';
+                else if (strength.score >= 3) color = '#ffc107';
+                
+                document.getElementById('strengthBar').style.backgroundColor = color;
+                
+                if (strength.feedback.length > 0) {
+                    document.getElementById('strengthFeedback').textContent = strength.feedback.join(', ');
+                } else {
+                    document.getElementById('strengthFeedback').textContent = 'Contraseña fuerte';
+                }
+            } catch (error) {
+                console.error('Error checking password:', error);
+            }
+        }
+        
+        async function register(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const statusEl = document.getElementById('statusMessage');
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, password})
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    statusEl.className = 'status success';
+                    statusEl.textContent = 'Cuenta creada exitosamente. Redirigiendo...';
+                    statusEl.style.display = 'block';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                } else {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = result.error || 'Error al registrar';
+                    statusEl.style.display = 'block';
+                }
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = 'Error de conexión';
+                statusEl.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,81 @@
+SecureVault - Política de Privacidad
+
+Última actualización: 1.0.0
+
+1. RECOPILACIÓN DE INFORMACIÓN
+SecureVault es una aplicación de escritorio que funciona completamente offline. 
+No recopilamos, almacenamos ni transmitimos ningún dato personal a servidores externos.
+
+2. ALMACENAMIENTO LOCAL
+Todos los datos que almacenas en SecureVault se guardan localmente en tu ordenador.
+Los archivos se almacenan en el directorio de instalación que elijas durante la instalación.
+
+3. ENCRIPTACIÓN
+SecureVault utiliza encriptación de nivel militar para proteger tus datos:
+- Nivel 1: Base64 (codificación básica)
+- Nivel 2: AES-128 (encriptación simétrica)
+- Nivel 3: AES-256 (encriptación avanzada)
+- Nivel 4: AES-256 + PBKDF2 con 100,000 iteraciones
+- Nivel 5: AES-256 + PBKDF2 con 200,000 iteraciones + HMAC (Máxima seguridad)
+
+4. VERIFICACIÓN DE ACTUALIZACIONES
+La aplicación puede verificar actualizaciones desde GitHub de forma opcional.
+Esta verificación solo consulta la versión disponible desde:
+https://raw.githubusercontent.com/MushhDev/db/main/version.txt
+No se envían datos personales durante esta verificación.
+
+5. DATOS DE USUARIO
+- Las contraseñas de usuario se almacenan con hash PBKDF2 (100,000 iteraciones)
+- Los datos encriptados solo pueden ser desencriptados con tu contraseña
+- No tenemos acceso a tus datos encriptados
+- Cada usuario tiene su propia base de datos local
+
+6. SEGURIDAD
+- Todos los datos sensibles se encriptan antes de almacenarse
+- Las sesiones utilizan tokens seguros generados aleatoriamente
+- No se almacenan contraseñas en texto plano
+- Los archivos se almacenan en formato JSON local
+
+7. RESPONSABILIDAD DEL USUARIO
+El usuario es responsable de:
+- Mantener sus contraseñas seguras y no compartirlas
+- Realizar backups regulares de sus datos exportados
+- No compartir sus credenciales de acceso
+- Mantener su sistema operativo actualizado
+- Usar contraseñas fuertes para sus items encriptados
+
+8. EXPORTACIÓN E IMPORTACIÓN
+- Puedes exportar tus datos en formato .encript, .json, .csv o .txt
+- Los archivos exportados están bajo tu control total
+- La importación requiere la contraseña correcta para archivos .encript
+
+9. CARACTERÍSTICAS DE SEGURIDAD
+- Sistema de autenticación con sesiones seguras
+- Encriptación de múltiples niveles
+- Generador de contraseñas seguras
+- Verificador de fuerza de contraseñas
+- Modo oscuro para privacidad visual
+
+10. CAMBIOS EN LA POLÍTICA
+Nos reservamos el derecho de actualizar esta política de privacidad.
+Los cambios se reflejarán en futuras versiones de la aplicación.
+Se recomienda revisar esta política periódicamente.
+
+11. SIN GARANTÍAS
+SecureVault se proporciona "tal cual" sin garantías de ningún tipo.
+Aunque utilizamos las mejores prácticas de seguridad, el usuario es responsable
+de mantener backups de sus datos importantes.
+
+12. CONTACTO
+Para preguntas sobre privacidad o seguridad, consulta el repositorio del proyecto:
+https://github.com/MushhDev/db
+
+13. ACEPTACIÓN
+Al instalar y usar SecureVault, aceptas esta política de privacidad.
+Si no estás de acuerdo con esta política, no instales ni uses la aplicación.
+
+---
+
+Esta aplicación es de código abierto y está diseñada para máxima privacidad.
+Todos los datos permanecen bajo tu control total.
+
